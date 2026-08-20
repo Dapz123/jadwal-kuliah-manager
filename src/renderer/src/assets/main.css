@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-accent: #3b82f6;
+  --color-accent-strong: #2563eb;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent-strong);
+    outline-offset: 2px;
+  }
+
+  :is(input, select, textarea) {
+    transition: border-color 150ms ease;
+  }
+
+  :is(input, select, textarea):focus-visible {
+    outline: none;
+    border-color: var(--color-accent-strong);
+  }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+  }
+}

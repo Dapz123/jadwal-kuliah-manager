@@ -1,0 +1,21 @@
+appId: id.kampus.jadwalkuliah
+productName: Jadwal Kuliah Manager
+directories:
+  output: release
+files:
+  - '!**/.vscode/*'
+  - '!src'
+  - '!docs/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{CONTEXT.md,AGENTS.md,skills-lock.json}'
+  - '!{.agents,.claude,.cursor}'
+win:
+  executableName: Jadwal Kuliah Manager
+  target:
+    - portable
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}
+npmRebuild: false
