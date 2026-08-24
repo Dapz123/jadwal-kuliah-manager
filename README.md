@@ -32,3 +32,11 @@ npm run dist
 ```
 
 CI: **Actions → Build Windows portable → Run workflow**. Artifact `windows-portable-<sha>` (unsigned `.exe`, simpan 14 hari).
+
+## Dokumentasi
+
+| Dokumen                                    | Isi                              |
+| ------------------------------------------ | -------------------------------- |
+| [CONTEXT.md](CONTEXT.md)                   | Bahasa domain (glossary)         |
+| [docs/concept/APP.md](docs/concept/APP.md) | Konsep sistem, flow, aturan MVP  |
+| [docs/adr/](docs/adr/)                     | Keputusan arsitektur / trade-off |

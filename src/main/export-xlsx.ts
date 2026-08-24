@@ -32,10 +32,11 @@ import type { Persistence } from './persistence/persistence.ts'
 
 const DAY_LABELS = WEEKDAY_LABELS
 
-const FONT_TITLE: Partial<Font> = { name: 'Calibri', size: 16, bold: true }
-const FONT_HEADER: Partial<Font> = { name: 'Calibri', size: 12, bold: true }
+const FONT_TITLE: Partial<Font> = { name: 'Agency FB', size: 18, bold: true }
+const FONT_HEADER: Partial<Font> = { name: 'Agency FB', size: 14, bold: true }
+const FONT_BODY: Partial<Font> = { name: 'Agency FB', size: 12 }
+const FONT_BEBAN_TITLE: Partial<Font> = { name: 'Calibri', size: 16, bold: true }
 const FONT_BEBAN_HEADER: Partial<Font> = { name: 'Calibri', size: 14, bold: true }
-const FONT_BODY: Partial<Font> = { name: 'Calibri', size: 10 }
 const FONT_BEBAN_BODY: Partial<Font> = { name: 'Calibri', size: 11 }
 
 const FILL_HEADER: Fill = {
@@ -60,10 +61,12 @@ const FILL_SPACER: Fill = {
 }
 
 const THIN: Partial<Border> = { style: 'thin' }
+const DOUBLE: Partial<Border> = { style: 'double' }
 const BORDER_BOX: Partial<Borders> = { top: THIN, left: THIN, bottom: THIN, right: THIN }
 const BORDER_TIME: Partial<Borders> = { top: THIN, left: THIN, right: THIN }
 const BORDER_MK: Partial<Borders> = { left: THIN, right: THIN }
 const BORDER_DOSEN: Partial<Borders> = { left: THIN, bottom: THIN, right: THIN }
+const SMT_COL_WIDTH = 6
 
 const ALIGN_CENTER = { horizontal: 'center' as const, vertical: 'middle' as const }
 const ALIGN_WRAP = { ...ALIGN_CENTER, wrapText: true }
@@ -119,19 +122,22 @@ function paintJadwalSheet(workbook: ExcelJS.Workbook, input: JadwalSheetInput): 
     }
   })
 
-  sheet.getColumn(1).width = 14
+  sheet.getColumn(1).width = SMT_COL_WIDTH
   for (let column = 2; column <= 11; column += 1) {
     sheet.getColumn(column).width = DAY_HALF_COL_WIDTH
   }
 
   sheet.mergeCells(1, 1, 1, 11)
   sheet.mergeCells(2, 1, 2, 11)
-  const title = `JADWAL PERKULIAHAN ${input.programStudiNama}`
-  const subtitle = `${input.jenisKelas} SEMESTER ${input.semester} TAHUN AKADEMIK ${input.tahunAkademik}`
+  const title = `JADWAL PERKULIAHAN ${input.programStudiNama}`.toUpperCase()
+  const subtitle =
+    `${input.jenisKelas} SEMESTER ${input.semester} TAHUN AKADEMIK ${input.tahunAkademik}`.toUpperCase()
   paintMerged(sheet, 1, 1, 1, 11, title, FONT_TITLE, ALIGN_CENTER)
   paintMerged(sheet, 2, 1, 2, 11, subtitle, FONT_TITLE, ALIGN_CENTER)
+  sheet.getRow(1).height = 24
+  sheet.getRow(2).height = 24
 
-  sheet.getCell(4, 1).value = 'SEMESTER'
+  sheet.getCell(4, 1).value = 'SMT'
   sheet.getCell(4, 1).font = FONT_HEADER
   sheet.getCell(4, 1).fill = FILL_HEADER
   sheet.getCell(4, 1).border = BORDER_BOX
@@ -154,6 +160,7 @@ function paintJadwalSheet(workbook: ExcelJS.Workbook, input: JadwalSheetInput): 
       BORDER_BOX
     )
   }
+  sheet.getRow(4).height = 18
 
   for (const band of input.grid.semesterBands) {
     const startRow = 5 + band.start * 3
@@ -187,12 +194,26 @@ function paintJadwalSheet(workbook: ExcelJS.Workbook, input: JadwalSheetInput): 
     sheet.getRow(startRow + 1).height = wrapRowHeightPt(slotMkLabels(input.grid.days, index))
     sheet.getRow(startRow + 2).height = wrapRowHeightPt(slotDosenNames(input.grid.days, index))
   }
+
+  const bands = input.grid.semesterBands
+  for (let i = 0; i < bands.length - 1; i += 1) {
+    const endRow = 5 + bands[i].start * 3 + bands[i].count * 3 - 1
+    const nextRow = endRow + 1
+    const bandMaster = sheet.getCell(5 + bands[i].start * 3, 1)
+    bandMaster.border = { ...bandMaster.border, bottom: DOUBLE }
+    for (let column = 1; column <= 11; column += 1) {
+      const above = sheet.getCell(endRow, column)
+      above.border = { ...above.border, bottom: DOUBLE }
+      const below = sheet.getCell(nextRow, column)
+      below.border = { ...below.border, top: DOUBLE }
+    }
+  }
 }
 
 export function prepareJadwalXlsx(
   persistence: Persistence,
   jadwalIds: number[]
-): { workbook: ExcelJS.Workbook; filename: string } {
+): { workbook: ExcelJS.Workbook; filename: string; gelarWarnings: string[] } {
   const ids = [...new Set(jadwalIds)]
   if (ids.length === 0) {
     throw apiError('JADWAL_INVALID', 'Pilih minimal satu Jadwal')
@@ -250,8 +271,23 @@ export function prepareJadwalXlsx(
 
   return {
     workbook,
-    filename: exportWorkbookFilename(entries.map((entry) => entry.meta))
+    filename: exportWorkbookFilename(entries.map((entry) => entry.meta)),
+    gelarWarnings: uniqueGelarWarnings(entries.map((entry) => entry.grid.gelarWarnings))
   }
+}
+
+function uniqueGelarWarnings(groups: readonly string[][]): string[] {
+  const seen = new Set<string>()
+  const warnings: string[] = []
+  for (const group of groups) {
+    for (const item of group) {
+      if (!seen.has(item)) {
+        seen.add(item)
+        warnings.push(item)
+      }
+    }
+  }
+  return warnings
 }
 
 export function prepareBebanDosenXlsx(
@@ -316,13 +352,18 @@ export function prepareBebanDosenXlsx(
 
   const titleAlign = { horizontal: 'center' as const, vertical: 'middle' as const }
   const alignNo: Partial<Alignment> = { horizontal: 'center', vertical: 'middle' }
+  const alignNamaDosen: Partial<Alignment> = {
+    horizontal: 'left',
+    vertical: 'middle',
+    wrapText: true
+  }
   const alignBody: Partial<Alignment> = { vertical: 'middle' }
   const alignJamLike: Partial<Alignment> = { horizontal: 'center', vertical: 'middle' }
 
   sheet.mergeCells(1, 1, 1, colCount)
   sheet.mergeCells(2, 1, 2, colCount)
   sheet.mergeCells(3, 1, 3, colCount)
-  paintMerged(sheet, 1, 1, 1, colCount, BEBAN_TITLE, FONT_TITLE, titleAlign)
+  paintMerged(sheet, 1, 1, 1, colCount, BEBAN_TITLE, FONT_BEBAN_TITLE, titleAlign)
   paintMerged(
     sheet,
     2,
@@ -330,7 +371,7 @@ export function prepareBebanDosenXlsx(
     2,
     colCount,
     bebanProdiTitle(selectedProdi),
-    FONT_TITLE,
+    FONT_BEBAN_TITLE,
     titleAlign
   )
   paintMerged(
@@ -340,7 +381,7 @@ export function prepareBebanDosenXlsx(
     3,
     colCount,
     bebanTahunTitle(input.tahunAkademik, input.semester),
-    FONT_TITLE,
+    FONT_BEBAN_TITLE,
     titleAlign
   )
 
@@ -387,6 +428,8 @@ export function prepareBebanDosenXlsx(
       cell.border = BORDER_BOX
       if (column === 1) {
         cell.alignment = alignNo
+      } else if (column === 2) {
+        cell.alignment = alignNamaDosen
       } else if (column === 4 || column === 5 || column === 6 || column === 7) {
         cell.alignment = alignJamLike
       } else {
@@ -404,12 +447,17 @@ export function prepareBebanDosenXlsx(
     if (row.kind === 'total' && mergeStart != null) {
       if (mergeStart < excelRowIndex) {
         sheet.mergeCells(mergeStart, 1, excelRowIndex, 1)
+        sheet.mergeCells(mergeStart, 2, excelRowIndex, 2)
       }
       for (let r = mergeStart; r <= excelRowIndex; r += 1) {
-        const cell = sheet.getCell(r, 1)
-        cell.border = BORDER_BOX
-        cell.alignment = alignNo
-        cell.font = FONT_BEBAN_BODY
+        const noCell = sheet.getCell(r, 1)
+        noCell.border = BORDER_BOX
+        noCell.alignment = alignNo
+        noCell.font = FONT_BEBAN_BODY
+        const namaCell = sheet.getCell(r, 2)
+        namaCell.border = BORDER_BOX
+        namaCell.alignment = alignNamaDosen
+        namaCell.font = FONT_BEBAN_BODY
       }
       mergeStart = null
     }

@@ -1,9 +1,10 @@
 import { useEffect, useState, type JSX } from 'react'
 import type { Bentrok, Dosen, Jadwal, JadwalSnapshot, Kelas, ProgramStudi } from '../../../shared/api'
 import { isApiError } from '../../../shared/api-error'
+import { gelarExportWarning } from '../../../shared/dosen-nama'
 import { packJadwalGrid, WEEKDAY_LABELS, type PackedSlot } from '../../../shared/export-grid'
 import { semesterKeRoman } from '../../../shared/semester-ke'
-import { Banner } from '../chrome'
+import { Banner, WarningBanner } from '../chrome'
 import { formatJam, hariLabel, joinBentrok } from './jadwal'
 import { lembarWeekdayGaps, lembarWeekendRows, type LembarSideRow } from './lembar'
 
@@ -180,6 +181,7 @@ export default function LembarPanel({
   }
 
   const grid = packJadwalGrid({ snapshots, kelas, dosen })
+  const gelarWarning = gelarExportWarning(grid.gelarWarnings)
   const joined = joinBentrok(kelas, bentrok)
   const bentrokSnapshots = joined.bySnapshotMkId
   const gaps = lembarWeekdayGaps(snapshots, kelas)
@@ -191,6 +193,7 @@ export default function LembarPanel({
   return (
     <div className="space-y-6">
       {error ? <Banner message={error} /> : null}
+      {gelarWarning ? <WarningBanner message={gelarWarning} /> : null}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[52rem] border-collapse text-center text-sm">
           <thead>

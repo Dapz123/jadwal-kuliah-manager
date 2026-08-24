@@ -173,7 +173,9 @@ export type PenugasanDosen = {
   jamSelesai: number | null
 }
 
-export type ExportJadwalXlsxResult = { canceled: true } | { path: string }
+export type ExportJadwalXlsxResult =
+  | { canceled: true }
+  | { path: string; gelarWarnings: string[] }
 
 export type ExportBebanDosenXlsxInput = {
   tahunAkademik: string
@@ -181,7 +183,7 @@ export type ExportBebanDosenXlsxInput = {
   jadwalIds: number[]
 }
 
-export type ExportBebanDosenXlsxResult = ExportJadwalXlsxResult
+export type ExportBebanDosenXlsxResult = { canceled: true } | { path: string }
 
 export type WaktuSks = {
   menit: number

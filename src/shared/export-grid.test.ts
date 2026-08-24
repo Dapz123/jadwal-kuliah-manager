@@ -54,11 +54,75 @@ test('a Senin Kelas with jam mulai occupies Senin and leaves other weekdays vaca
       jamSelesai: 630,
       mkNama: 'Algoritma',
       sks: 3,
-      dosenNama: 'Dr. Ada M.Kom.',
+      dosenNama: 'Dr. Ada, M.Kom.',
       semesterKe: null
     }
   ])
   assert.deepEqual(packed.days.slice(1), [[vacant], [vacant], [vacant], [vacant]])
+  assert.deepEqual(packed.gelarWarnings, [])
+})
+
+test('lembar dosen nama keeps the highest gelar belakang, or two when there are three', () => {
+  const packed = packJadwalGrid({
+    snapshots: [
+      { id: 1, kode: 'IF101', nama: 'Algoritma', sks: 3 },
+      { id: 2, kode: 'IF202', nama: 'Jaringan', sks: 2 }
+    ],
+    kelas: [
+      {
+        snapshotMkId: 1,
+        dosenId: 10,
+        hari: 1,
+        jamMulai: 480,
+        jamSelesai: 630
+      },
+      {
+        snapshotMkId: 2,
+        dosenId: 11,
+        hari: 2,
+        jamMulai: 480,
+        jamSelesai: 600
+      }
+    ],
+    dosen: [
+      { id: 10, nama: 'Ada', gelarDepan: 'Dr.', gelarBelakang: 'S.Kom., M.Kom.' },
+      { id: 11, nama: 'Budi', gelarDepan: null, gelarBelakang: 'S.T., M.T., Ph.D.' }
+    ]
+  })
+  assert.equal(packed.days[0][0].kind === 'occupied' && packed.days[0][0].dosenNama, 'Dr. Ada, M.Kom.')
+  assert.equal(packed.days[1][0].kind === 'occupied' && packed.days[1][0].dosenNama, 'Budi, M.T., Ph.D.')
+  assert.deepEqual(packed.gelarWarnings, [])
+})
+
+test('unrecognized gelar belakang stays untrimmed and is listed once per dosen', () => {
+  const packed = packJadwalGrid({
+    snapshots: [
+      { id: 1, kode: 'IF101', nama: 'Algoritma', sks: 3 },
+      { id: 2, kode: 'IF202', nama: 'Jaringan', sks: 2 }
+    ],
+    kelas: [
+      {
+        snapshotMkId: 1,
+        dosenId: 10,
+        hari: 1,
+        jamMulai: 480,
+        jamSelesai: 630
+      },
+      {
+        snapshotMkId: 2,
+        dosenId: 10,
+        hari: 2,
+        jamMulai: 480,
+        jamSelesai: 600
+      }
+    ],
+    dosen: [{ id: 10, nama: 'Ada', gelarDepan: 'Dr.', gelarBelakang: 'S.Kom., XYZ' }]
+  })
+  assert.equal(
+    packed.days[0][0].kind === 'occupied' && packed.days[0][0].dosenNama,
+    'Dr. Ada, S.Kom., XYZ'
+  )
+  assert.deepEqual(packed.gelarWarnings, ['Ada (XYZ)'])
 })
 
 test('a weekday packs Kelas by jam mulai then snapshot kode, including overlapping times', () => {
@@ -343,7 +407,7 @@ test('export sheet name is kode-TA-semester-Pagi|Sore with illegal chars strippe
   )
 })
 
-test('export workbook filename stays single-pattern for one Jadwal and collapses multi same Prodi+TA', () => {
+test('export workbook filename collapses same Prodi+TA, same TA+Semester across Prodi, else multi', () => {
   const pagi = {
     kode: 'D3MI',
     tahunAkademik: '2026/2027',
@@ -354,10 +418,11 @@ test('export workbook filename stays single-pattern for one Jadwal and collapses
   assert.equal(exportWorkbookFilename([pagi]), 'Jadwal-D3MI-2026-2027-Ganjil-Pagi.xlsx')
   assert.equal(exportWorkbookFilename([pagi, sore]), 'Jadwal-D3MI-2026-2027.xlsx')
   assert.equal(
-    exportWorkbookFilename([
-      pagi,
-      { ...pagi, kode: 'TI', tahunAkademik: '2026/2027' }
-    ]),
+    exportWorkbookFilename([pagi, { ...pagi, kode: 'TI' }]),
+    'Jadwal-2026-2027-Ganjil.xlsx'
+  )
+  assert.equal(
+    exportWorkbookFilename([pagi, { ...pagi, kode: 'TI', semester: 'Genap' }]),
     'Jadwal-multi.xlsx'
   )
   assert.equal(

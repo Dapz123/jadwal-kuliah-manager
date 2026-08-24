@@ -1,6 +1,6 @@
 import { useEffect, useState, type JSX } from 'react'
 import type { Jadwal, Kurikulum, ProgramStudi, Semester } from '../../../shared/api'
-import { Banner, actionBtn, primaryBtn } from '../chrome'
+import { Banner, primaryBtn } from '../chrome'
 import { errorMessage, SuccessBanner } from './helpers'
 
 type JadwalRow = Jadwal & { programStudiNama: string; kurikulumNama: string }
@@ -169,7 +169,7 @@ export default function ExportBebanPanel({
       ) : null}
 
       <div className="flex flex-wrap items-end gap-4">
-        <label className="flex min-w-48 flex-col gap-1 text-sm text-slate-700">
+        <label className="flex min-w-48 shrink-0 flex-col gap-1 text-sm text-slate-700">
           Tahun Akademik
           <select
             className="rounded border border-slate-300 pl-3 pr-9 py-2"
@@ -184,7 +184,7 @@ export default function ExportBebanPanel({
             ))}
           </select>
         </label>
-        <label className="flex min-w-40 flex-col gap-1 text-sm text-slate-700">
+        <label className="flex min-w-40 shrink-0 flex-col gap-1 text-sm text-slate-700">
           Semester
           <select
             className="rounded border border-slate-300 pl-3 pr-9 py-2"
@@ -196,91 +196,95 @@ export default function ExportBebanPanel({
             <option value="Genap">Genap</option>
           </select>
         </label>
-        <button type="button" className={primaryBtn} disabled={!unduhEnabled} onClick={onUnduh}>
+        <div
+          className="flex min-w-48 flex-1 flex-col gap-1 text-sm text-slate-700"
+          role="group"
+          aria-labelledby="export-beban-prodi-label"
+        >
+          <span id="export-beban-prodi-label">Program Studi</span>
+          <div className="min-w-0 overflow-x-auto">
+            <div className="flex flex-nowrap gap-3 py-2">
+              {prodi.map((row) => {
+                const checkboxId = `export-beban-prodi-${row.id}`
+                return (
+                  <label
+                    key={row.id}
+                    htmlFor={checkboxId}
+                    className="flex shrink-0 items-center gap-2 whitespace-nowrap"
+                  >
+                    <input
+                      id={checkboxId}
+                      type="checkbox"
+                      className="size-4 rounded border-slate-300"
+                      checked={selectedProdiSet.has(row.id)}
+                      onChange={() => toggleProdi(row.id)}
+                    />
+                    <span>
+                      {row.kode} — {row.nama}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          className={`${primaryBtn} ml-auto shrink-0`}
+          disabled={!unduhEnabled}
+          onClick={onUnduh}
+        >
           Unduh
         </button>
       </div>
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-slate-700">Program Studi</legend>
-        <div className="flex flex-wrap gap-3">
-          {prodi.map((row) => {
-            const checkboxId = `export-beban-prodi-${row.id}`
-            return (
-              <label key={row.id} htmlFor={checkboxId} className="flex items-center gap-2 text-sm">
-                <input
-                  id={checkboxId}
-                  type="checkbox"
-                  className="size-4 rounded border-slate-300"
-                  checked={selectedProdiSet.has(row.id)}
-                  onChange={() => toggleProdi(row.id)}
-                />
-                <span>
-                  {row.kode} — {row.nama}
-                </span>
-              </label>
-            )
-          })}
-        </div>
-      </fieldset>
 
       {selectedProdiIds.length === 0 ? null : loadingJadwal ? (
         <p className="text-slate-600">Memuat…</p>
       ) : jadwalRows.length === 0 ? (
         <p className="text-slate-600">Belum ada Jadwal untuk filter ini.</p>
       ) : (
-        <>
-          {selectedIds.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-700">
-              <span role="status">{selectedIds.length} terpilih</span>
-              <button type="button" className={actionBtn} onClick={() => setSelectedIds([])}>
-                Hapus pilihan
-              </button>
-            </div>
-          ) : null}
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-500">
-                  <th className="w-px px-2 py-2 font-medium">
-                    <span className="sr-only">Pilih</span>
-                  </th>
-                  <th className="px-2 py-2 font-medium">Program Studi</th>
-                  <th className="px-2 py-2 font-medium">Jenis Kelas</th>
-                  <th className="px-2 py-2 font-medium">Kurikulum</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jadwalRows.map((row) => {
-                  const selected = selectedSet.has(row.id)
-                  const checkboxId = `export-beban-jadwal-${row.id}`
-                  return (
-                    <tr
-                      key={row.id}
-                      className={['border-b border-slate-100', selected ? 'bg-slate-50' : ''].join(
-                        ' '
-                      )}
-                    >
-                      <td className="w-px px-2 py-2">
-                        <input
-                          id={checkboxId}
-                          type="checkbox"
-                          className="size-4 rounded border-slate-300"
-                          checked={selected}
-                          aria-label={`Pilih Jadwal ${row.programStudiNama} ${row.jenisKelas}`}
-                          onChange={() => toggleJadwal(row.id)}
-                        />
-                      </td>
-                      <td className="px-2 py-2 text-slate-800">{row.programStudiNama}</td>
-                      <td className="px-2 py-2 text-slate-800">{row.jenisKelas}</td>
-                      <td className="px-2 py-2 text-slate-800">{row.kurikulumNama}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500">
+                <th className="w-px px-2 py-2 font-medium">
+                  <span className="sr-only">Pilih</span>
+                </th>
+                <th className="px-2 py-2 font-medium">Program Studi</th>
+                <th className="px-2 py-2 font-medium">Jenis Kelas</th>
+                <th className="px-2 py-2 font-medium">Kurikulum</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jadwalRows.map((row) => {
+                const selected = selectedSet.has(row.id)
+                const checkboxId = `export-beban-jadwal-${row.id}`
+                return (
+                  <tr
+                    key={row.id}
+                    className={['border-b border-slate-100', selected ? 'bg-slate-50' : ''].join(
+                      ' '
+                    )}
+                  >
+                    <td className="w-px px-2 py-2">
+                      <input
+                        id={checkboxId}
+                        type="checkbox"
+                        className="size-4 rounded border-slate-300"
+                        checked={selected}
+                        aria-label={`Pilih Jadwal ${row.programStudiNama} ${row.jenisKelas}`}
+                        onChange={() => toggleJadwal(row.id)}
+                      />
+                    </td>
+                    <td className="px-2 py-2 text-slate-800">{row.programStudiNama}</td>
+                    <td className="px-2 py-2 text-slate-800">{row.jenisKelas}</td>
+                    <td className="px-2 py-2 text-slate-800">{row.kurikulumNama}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

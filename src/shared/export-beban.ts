@@ -1,5 +1,5 @@
 import type { JenisKelas, Semester } from './api.ts'
-import { dosenNamaLengkap } from './dosen-nama.ts'
+import { dosenNamaExport } from './dosen-nama.ts'
 import { filenamePiece, formatJamRentang } from './export-grid.ts'
 import { semesterKeRoman } from './semester-ke.ts'
 
@@ -134,7 +134,7 @@ export function packBebanDosen(kelas: readonly BebanPackKelas[]): BebanDosenPack
 
   const groups = [...byDosen.values()].map((list) => list.slice().sort(compareKelas))
   groups.sort((a, b) =>
-    dosenNamaLengkap(a[0].dosen).localeCompare(dosenNamaLengkap(b[0].dosen), undefined, {
+    dosenNamaExport(a[0].dosen).localeCompare(dosenNamaExport(b[0].dosen), undefined, {
       sensitivity: 'base'
     })
   )
@@ -150,7 +150,7 @@ export function packBebanDosen(kelas: readonly BebanPackKelas[]): BebanDosenPack
       rows.push({
         kind: 'mk',
         no: index === 0 ? nomor : '',
-        namaDosen: index === 0 ? dosenNamaLengkap(row.dosen) : '',
+        namaDosen: index === 0 ? dosenNamaExport(row.dosen) : '',
         mataKuliah: row.nama,
         sks: row.sks,
         kelas: kelasLabel(row),

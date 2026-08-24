@@ -21,6 +21,17 @@ export function Banner({ message }: { message: string }): JSX.Element {
   )
 }
 
+export function WarningBanner({ message }: { message: string }): JSX.Element {
+  return (
+    <p
+      role="status"
+      className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+    >
+      {message}
+    </p>
+  )
+}
+
 export function PageShell({
   title,
   description,

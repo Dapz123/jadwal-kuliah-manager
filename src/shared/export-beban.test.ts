@@ -82,7 +82,7 @@ test('packBebanDosen emits MK rows, Total, spacer, then grand total', () => {
     {
       kind: 'mk',
       no: 1,
-      namaDosen: 'Dr. Budi M.Kom.',
+      namaDosen: 'Dr. Budi, M.Kom.',
       mataKuliah: 'Algoritma',
       sks: 3,
       kelas: 'IF I REG-PAGI',

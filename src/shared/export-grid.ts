@@ -1,4 +1,4 @@
-import { dosenNamaLengkap } from './dosen-nama.ts'
+import { dosenNamaLembar, gelarWarningItem } from './dosen-nama.ts'
 
 export type PackedSlot =
   | { kind: 'vacant' }
@@ -42,6 +42,8 @@ export type PackedGrid = {
   days: PackedSlot[][]
   /** Contiguous SEMESTER column bands after pack-by-ke (ascending, nulls last). */
   semesterBands: Array<{ semesterKe: number | null; start: number; count: number }>
+  /** Dosen whose gelar belakang could not be ranked; names on the sheet stay untrimmed. */
+  gelarWarnings: string[]
 }
 
 export const WEEKDAY_LABELS = ['SENIN', 'SELASA', 'RABU', 'KAMIS', "JUM'AT"] as const
@@ -102,6 +104,8 @@ export function packJadwalGrid(input: PackJadwalGridInput): PackedGrid {
     slot: PackedSlot
   }> = []
   const weekendCount = countWeekendKelas(input.kelas)
+  const gelarWarnings: string[] = []
+  const warnedDosen = new Set<number>()
 
   for (const kelas of input.kelas) {
     if (kelas.hari === 6 || kelas.hari === 7) {
@@ -116,6 +120,15 @@ export function packJadwalGrid(input: PackJadwalGridInput): PackedGrid {
     }
     const dosen = kelas.dosenId == null ? undefined : dosenById.get(kelas.dosenId)
     const semesterKe = snapshot.semesterKe ?? null
+    let dosenNama = ''
+    if (dosen != null) {
+      const formatted = dosenNamaLembar(dosen)
+      dosenNama = formatted.nama
+      if (formatted.unknownGelar.length > 0 && !warnedDosen.has(dosen.id)) {
+        warnedDosen.add(dosen.id)
+        gelarWarnings.push(gelarWarningItem(dosen.nama, formatted.unknownGelar))
+      }
+    }
     placeable.push({
       hari: kelas.hari,
       jamMulai: kelas.jamMulai,
@@ -128,7 +141,7 @@ export function packJadwalGrid(input: PackJadwalGridInput): PackedGrid {
         jamSelesai: kelas.jamSelesai,
         mkNama: snapshot.nama,
         sks: snapshot.sks,
-        dosenNama: dosen == null ? '' : dosenNamaLengkap(dosen),
+        dosenNama,
         semesterKe
       }
     })
@@ -140,7 +153,8 @@ export function packJadwalGrid(input: PackJadwalGridInput): PackedGrid {
       slotCount: 1,
       weekendCount,
       days,
-      semesterBands: [{ semesterKe: null, start: 0, count: 1 }]
+      semesterBands: [{ semesterKe: null, start: 0, count: 1 }],
+      gelarWarnings
     }
   }
 
@@ -167,7 +181,7 @@ export function packJadwalGrid(input: PackJadwalGridInput): PackedGrid {
     start += count
   }
 
-  return { slotCount: start, weekendCount, days, semesterBands }
+  return { slotCount: start, weekendCount, days, semesterBands, gelarWarnings }
 }
 
 export function slotRowSemesterKe(days: PackedSlot[][], index: number): number | null {
@@ -237,6 +251,12 @@ export function exportWorkbookFilename(items: readonly ExportJadwalMeta[]): stri
   if (sameProdiTa) {
     return `Jadwal-${filenamePiece(first.kode)}-${filenamePiece(first.tahunAkademik)}.xlsx`
   }
+  const sameTaSemester = items.every(
+    (row) => row.tahunAkademik === first.tahunAkademik && row.semester === first.semester
+  )
+  if (sameTaSemester) {
+    return `Jadwal-${filenamePiece(first.tahunAkademik)}-${filenamePiece(first.semester)}.xlsx`
+  }
   return 'Jadwal-multi.xlsx'
 }
 
@@ -258,7 +278,8 @@ export function exportBanner(kelengkapan: string, weekendCount: number): string 
 
 /**
  * ponytail: ExcelJS has no row autofit; Excel also won't autofit *merged* wrap cells.
- * Compact AutoFit sim for Calibri 10 in a 2× day-half merge — prefer short rows; if clip, lower CHARS.
+ * Compact AutoFit sim for Agency FB 10 in a 2× day-half merge — prefer short rows; if clip, lower CHARS.
+ * 48 was Calibri; Agency FB is condensed so this over-counts lines (taller rows). If sparse, raise CHARS.
  */
 export const DAY_HALF_COL_WIDTH = 20
 /** Slightly above 2× width so soft-wrap under-counts lines (shorter rows) vs glyph-dense clip risk. */

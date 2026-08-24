@@ -1,5 +1,5 @@
 import { join } from 'path'
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron'
 import type {
   ExportBebanDosenXlsxInput,
   ExportBebanDosenXlsxResult,
@@ -23,6 +23,8 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     title: 'Jadwal Kuliah Manager',
+    // stopgap: Fluent people-edit-16-filled; replace build/icon.png
+    icon: app.isPackaged ? undefined : join(__dirname, '../../build/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -66,7 +68,7 @@ async function wrapAsync<T>(fn: () => Promise<T>): Promise<IpcResult<T>> {
 async function saveWorkbook(
   workbook: { xlsx: { writeFile: (path: string) => Promise<void> } },
   filename: string
-): Promise<ExportJadwalXlsxResult> {
+): Promise<{ canceled: true } | { path: string }> {
   const options = {
     defaultPath: filename,
     filters: [{ name: 'XLSX', extensions: ['xlsx'] }]
@@ -87,7 +89,11 @@ function registerExportIpc(db: Persistence): void {
     (_event, jadwalIds: number[]): Promise<IpcResult<ExportJadwalXlsxResult>> =>
       wrapAsync(async () => {
         const prepared = prepareJadwalXlsx(db, jadwalIds)
-        return saveWorkbook(prepared.workbook, prepared.filename)
+        const saved = await saveWorkbook(prepared.workbook, prepared.filename)
+        if ('path' in saved) {
+          return { path: saved.path, gelarWarnings: prepared.gelarWarnings }
+        }
+        return saved
       })
   )
   ipcMain.handle(
@@ -137,6 +143,9 @@ if (!gotTheLock) {
 
   app.whenReady().then(() => {
     app.setAppUserModelId('id.kampus.jadwalkuliah')
+    if (app.isPackaged) {
+      Menu.setApplicationMenu(null)
+    }
     persistence = openDatabaseOrQuit()
     if (!persistence) {
       return

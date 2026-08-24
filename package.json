@@ -10,7 +10,7 @@
     "start": "electron-vite preview",
     "build": "npm run typecheck && electron-vite build",
     "dist": "npm run build && electron-builder --win portable",
-    "test": "node --experimental-strip-types --test src/renderer/src/nav.test.ts src/renderer/src/master-data/catalog.test.ts src/renderer/src/jadwal/jadwal.test.ts src/renderer/src/jadwal/lembar.test.ts src/renderer/src/beban-dosen/beban.test.ts src/renderer/src/export/completeness.test.ts src/shared/export-grid.test.ts src/shared/export-beban.test.ts src/shared/semester-ke.test.ts src/shared/waktu-sks.test.ts src/main/persistence/*.test.ts",
+    "test": "node --experimental-strip-types --test src/renderer/src/nav.test.ts src/renderer/src/master-data/catalog.test.ts src/renderer/src/jadwal/jadwal.test.ts src/renderer/src/jadwal/lembar.test.ts src/renderer/src/beban-dosen/beban.test.ts src/renderer/src/export/completeness.test.ts src/shared/dosen-nama.test.ts src/shared/export-grid.test.ts src/shared/export-beban.test.ts src/shared/semester-ke.test.ts src/shared/waktu-sks.test.ts src/main/persistence/*.test.ts",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
