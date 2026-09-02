@@ -6,3 +6,12 @@ release
 .DS_Store
 .eslintcache
 *.log*
+AGENTS.md
+CONTEXT.md
+.scratch/
+.cursor/
+.agents/
+docs/adr/
+docs/agents/
+docs/concept/
+docs/examples/
