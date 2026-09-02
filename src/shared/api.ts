@@ -185,6 +185,14 @@ export type ExportBebanDosenXlsxInput = {
 
 export type ExportBebanDosenXlsxResult = { canceled: true } | { path: string }
 
+export type ExportRekapMkXlsxInput = {
+  tahunAkademik: string
+  semester: Semester
+  jadwalIds: number[]
+}
+
+export type ExportRekapMkXlsxResult = { canceled: true } | { path: string }
+
 export type WaktuSks = {
   menit: number
   potonganSoreAktif: boolean
@@ -229,6 +237,8 @@ export type AppApi = {
   listPenugasanDosen: (tahunAkademik: string) => Promise<PenugasanDosen[]>
   exportJadwalXlsx: (jadwalIds: number[]) => Promise<ExportJadwalXlsxResult>
   exportBebanDosenXlsx: (input: ExportBebanDosenXlsxInput) => Promise<ExportBebanDosenXlsxResult>
+  exportRekapMkXlsx: (input: ExportRekapMkXlsxInput) => Promise<ExportRekapMkXlsxResult>
+  showItemInFolder: (filePath: string) => Promise<void>
 }
 
 export type IpcResult<T> = { ok: true; value: T } | { ok: false; error: ApiError }

@@ -16,7 +16,8 @@ export const BEBAN_HEADERS = [
   'Jam'
 ] as const
 
-export const BEBAN_TITLE = 'REKAP TUGAS MENGAJAR DOSEN'
+export const BEBAN_TITLE = 'REKAP PENUGASAN DOSEN'
+export const PENUGASAN_SHEET_NAME = 'Rekap Penugasan Dosen'
 export const BEBAN_GRAND_LABEL = 'Total Seluruh SKS'
 
 export type BebanPackKelas = {
@@ -178,5 +179,5 @@ export function packBebanDosen(kelas: readonly BebanPackKelas[]): BebanDosenPack
 }
 
 export function exportBebanFilename(tahunAkademik: string, semester: Semester): string {
-  return `Beban-Dosen-${filenamePiece(tahunAkademik)}-${filenamePiece(semester)}.xlsx`
+  return `Rekap-Penugasan-Dosen-${filenamePiece(tahunAkademik)}-${filenamePiece(semester)}.xlsx`
 }

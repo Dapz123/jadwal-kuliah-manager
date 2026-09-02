@@ -285,7 +285,10 @@ export const DAY_HALF_COL_WIDTH = 20
 /** Slightly above 2× width so soft-wrap under-counts lines (shorter rows) vs glyph-dense clip risk. */
 export const WRAP_ROW_CHARS_PER_LINE = 48
 export const WRAP_ROW_MIN_HEIGHT_PT = 15
-export const WRAP_ROW_EXTRA_LINE_PT = 11
+/** MK/dosen row height when text wraps or exceeds one line in the merged day cell. */
+export const WRAP_ROW_WRAPPED_HEIGHT_PT = 30
+/** ponytail: length heuristic — tune against Excel print, not char count alone */
+export const WRAP_ROW_LONG_TEXT_CHARS = 45
 
 export function mkCellLabel(mkNama: string, sks: number): string {
   return `${mkNama} (${sks})`
@@ -334,13 +337,19 @@ export function countWrapLines(text: string, charsPerLine: number): number {
 /** Compact autofit-style height from candidate cell texts across Senin–Jumat. */
 export function wrapRowHeightPt(texts: readonly string[]): number {
   let lines = 0
+  let maxLen = 0
   for (const text of texts) {
-    lines = Math.max(lines, countWrapLines(text, WRAP_ROW_CHARS_PER_LINE))
+    const trimmed = text.trim()
+    lines = Math.max(lines, countWrapLines(trimmed, WRAP_ROW_CHARS_PER_LINE))
+    maxLen = Math.max(maxLen, trimmed.length)
   }
-  if (lines <= 0) {
+  if (lines <= 0 && maxLen === 0) {
     return WRAP_ROW_MIN_HEIGHT_PT
   }
-  return WRAP_ROW_MIN_HEIGHT_PT + (lines - 1) * WRAP_ROW_EXTRA_LINE_PT
+  if (lines >= 2 || maxLen >= WRAP_ROW_LONG_TEXT_CHARS) {
+    return WRAP_ROW_WRAPPED_HEIGHT_PT
+  }
+  return WRAP_ROW_MIN_HEIGHT_PT
 }
 
 export function slotMkLabels(days: PackedSlot[][], index: number): string[] {

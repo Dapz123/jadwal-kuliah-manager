@@ -515,13 +515,17 @@ test('export banner appends weekend count and leaves Lengkap alone when there is
   )
 })
 
-test('wrap row height autofits compact: 15pt one line, +11pt per soft-wrapped line', () => {
+test('wrap row height: 15pt one line, 30pt when wrapped or long MK/dosen text', () => {
   assert.equal(wrapRowHeightPt([]), 15)
   assert.equal(wrapRowHeightPt(['']), 15)
   assert.equal(wrapRowHeightPt(['Ada']), 15)
-  assert.equal(wrapRowHeightPt(['x'.repeat(48)]), 15)
-  assert.equal(wrapRowHeightPt(['x'.repeat(49)]), 26)
+  assert.equal(wrapRowHeightPt(['x'.repeat(44)]), 15)
+  assert.equal(wrapRowHeightPt(['x'.repeat(49)]), 30)
   assert.equal(wrapRowHeightPt(['Dr. Ir. Soekarno Hatta, M.Kom.']), 15)
+  assert.equal(
+    wrapRowHeightPt(['Artificial Intelligence & Machine Learning (3)']),
+    30
+  )
 })
 
 test('countWrapLines packs words like Excel soft wrap', () => {

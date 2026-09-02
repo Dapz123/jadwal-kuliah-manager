@@ -257,6 +257,12 @@ test('packBebanDosen sorts dosen groups, spacers between, grand sums all', () =>
 })
 
 test('exportBebanFilename sanitizes TA slash and includes semester', () => {
-  assert.equal(exportBebanFilename('2026/2027', 'Ganjil'), 'Beban-Dosen-2026-2027-Ganjil.xlsx')
-  assert.equal(exportBebanFilename('2026/2027', 'Genap'), 'Beban-Dosen-2026-2027-Genap.xlsx')
+  assert.equal(
+    exportBebanFilename('2026/2027', 'Ganjil'),
+    'Rekap-Penugasan-Dosen-2026-2027-Ganjil.xlsx'
+  )
+  assert.equal(
+    exportBebanFilename('2026/2027', 'Genap'),
+    'Rekap-Penugasan-Dosen-2026-2027-Genap.xlsx'
+  )
 })

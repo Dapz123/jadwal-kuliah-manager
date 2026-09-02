@@ -1,13 +1,17 @@
+import { existsSync } from 'fs'
 import { join } from 'path'
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron'
+import { apiError } from '../shared/api-error'
 import type {
   ExportBebanDosenXlsxInput,
   ExportBebanDosenXlsxResult,
   ExportJadwalXlsxResult,
+  ExportRekapMkXlsxInput,
+  ExportRekapMkXlsxResult,
   IpcResult
 } from '../shared/api'
 import { isApiError, type ApiError } from '../shared/api-error'
-import { prepareBebanDosenXlsx, prepareJadwalXlsx } from './export-xlsx'
+import { prepareBebanDosenXlsx, prepareJadwalXlsx, prepareRekapMkXlsx } from './export-xlsx'
 import { registerPersistenceIpc } from './persistence/ipc'
 import { resolveDatabasePath } from './persistence/path'
 import { openPersistence, type Persistence } from './persistence/persistence'
@@ -83,6 +87,19 @@ async function saveWorkbook(
   return { path: result.filePath }
 }
 
+function registerShellIpc(): void {
+  ipcMain.handle(
+    'shell:show-item-in-folder',
+    (_event, filePath: string): Promise<IpcResult<void>> =>
+      wrapAsync(async () => {
+        if (!existsSync(filePath)) {
+          throw apiError('NOT_FOUND', 'File tidak ditemukan')
+        }
+        shell.showItemInFolder(filePath)
+      })
+  )
+}
+
 function registerExportIpc(db: Persistence): void {
   ipcMain.handle(
     'jadwal:export-xlsx',
@@ -101,6 +118,14 @@ function registerExportIpc(db: Persistence): void {
     (_event, input: ExportBebanDosenXlsxInput): Promise<IpcResult<ExportBebanDosenXlsxResult>> =>
       wrapAsync(async () => {
         const prepared = prepareBebanDosenXlsx(db, input)
+        return saveWorkbook(prepared.workbook, prepared.filename)
+      })
+  )
+  ipcMain.handle(
+    'rekap-mk:export-xlsx',
+    (_event, input: ExportRekapMkXlsxInput): Promise<IpcResult<ExportRekapMkXlsxResult>> =>
+      wrapAsync(async () => {
+        const prepared = prepareRekapMkXlsx(db, input)
         return saveWorkbook(prepared.workbook, prepared.filename)
       })
   )
@@ -151,6 +176,7 @@ if (!gotTheLock) {
       return
     }
     registerPersistenceIpc(persistence)
+    registerShellIpc()
     registerExportIpc(persistence)
     createWindow()
   })

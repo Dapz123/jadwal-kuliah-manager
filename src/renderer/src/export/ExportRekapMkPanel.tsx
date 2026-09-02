@@ -6,7 +6,7 @@ import { savedExportMessage } from './saved-export-message'
 
 type JadwalRow = Jadwal & { programStudiNama: string; kurikulumNama: string }
 
-export default function ExportBebanPanel({
+export default function ExportRekapMkPanel({
   prodi
 }: {
   prodi: ProgramStudi[]
@@ -123,7 +123,7 @@ export default function ExportBebanPanel({
     }
     setDownloading(true)
     void window.api
-      .exportBebanDosenXlsx({
+      .exportRekapMkXlsx({
         tahunAkademik,
         semester,
         jadwalIds: selectedIds
@@ -209,13 +209,13 @@ export default function ExportBebanPanel({
         <div
           className="flex min-w-48 flex-1 flex-col gap-1 text-sm text-slate-700"
           role="group"
-          aria-labelledby="export-beban-prodi-label"
+          aria-labelledby="export-rekap-mk-prodi-label"
         >
-          <span id="export-beban-prodi-label">Program Studi</span>
+          <span id="export-rekap-mk-prodi-label">Program Studi</span>
           <div className="min-w-0 overflow-x-auto">
             <div className="flex flex-nowrap gap-3 py-2">
               {prodi.map((row) => {
-                const checkboxId = `export-beban-prodi-${row.id}`
+                const checkboxId = `export-rekap-mk-prodi-${row.id}`
                 return (
                   <label
                     key={row.id}
@@ -268,7 +268,7 @@ export default function ExportBebanPanel({
             <tbody>
               {jadwalRows.map((row) => {
                 const selected = selectedSet.has(row.id)
-                const checkboxId = `export-beban-jadwal-${row.id}`
+                const checkboxId = `export-rekap-mk-jadwal-${row.id}`
                 return (
                   <tr
                     key={row.id}

@@ -7,6 +7,8 @@ import type {
   ExportBebanDosenXlsxInput,
   ExportBebanDosenXlsxResult,
   ExportJadwalXlsxResult,
+  ExportRekapMkXlsxInput,
+  ExportRekapMkXlsxResult,
   IpcResult,
   Jadwal,
   JadwalSnapshot,
@@ -73,7 +75,10 @@ const api: AppApi = {
     invoke<PenugasanDosen[]>('penugasan-dosen:list', tahunAkademik),
   exportJadwalXlsx: (jadwalIds) => invoke<ExportJadwalXlsxResult>('jadwal:export-xlsx', jadwalIds),
   exportBebanDosenXlsx: (input: ExportBebanDosenXlsxInput) =>
-    invoke<ExportBebanDosenXlsxResult>('beban-dosen:export-xlsx', input)
+    invoke<ExportBebanDosenXlsxResult>('beban-dosen:export-xlsx', input),
+  exportRekapMkXlsx: (input: ExportRekapMkXlsxInput) =>
+    invoke<ExportRekapMkXlsxResult>('rekap-mk:export-xlsx', input),
+  showItemInFolder: (filePath) => invoke<void>('shell:show-item-in-folder', filePath)
 }
 
 contextBridge.exposeInMainWorld('api', api)

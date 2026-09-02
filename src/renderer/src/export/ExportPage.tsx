@@ -4,11 +4,14 @@ import { gelarExportWarning } from '../../../shared/dosen-nama'
 import { Banner, PageShell, PageTabs, WarningBanner, primaryBtn } from '../chrome'
 import { exportCompletenessBanner } from './completeness'
 import ExportBebanPanel from './ExportBebanPanel'
+import ExportRekapMkPanel from './ExportRekapMkPanel'
+import { savedExportMessage } from './saved-export-message'
 import { errorMessage, StatusBanner, SuccessBanner } from './helpers'
 
 const EXPORT_TABS = [
   { id: 'lembar' as const, label: 'Lembar Jadwal' },
-  { id: 'rekap' as const, label: 'Rekap Beban Dosen' }
+  { id: 'penugasan' as const, label: 'Rekap Penugasan Dosen' },
+  { id: 'rekap-mk' as const, label: 'Rekap MK' }
 ]
 
 type ExportTab = (typeof EXPORT_TABS)[number]['id']
@@ -17,7 +20,10 @@ type ProgramStudiFilter = number | 'all' | null
 const DESCRIPTION: Record<ExportTab, string> = {
   lembar:
     'Unduh XLSX satu atau beberapa Jadwal (satu sheet per Jadwal), termasuk seluruh Prodi untuk satu Tahun Akademik dan Semester.',
-  rekap: 'Unduh XLSX rekap penugasan dosen (satu baris per Kelas, Total SKS per dosen) untuk Tahun Akademik dan Semester terpilih.'
+  penugasan:
+    'Unduh XLSX rekap penugasan dosen (satu baris per Kelas, Total SKS per dosen) untuk Tahun Akademik dan Semester terpilih.',
+  'rekap-mk':
+    'Unduh XLSX penugasan dosen per Mata Kuliah (kolom Reguler Pagi dan Reguler Sore), dikelompokkan per Semester ke.'
 }
 
 export default function ExportPage(): JSX.Element {
@@ -32,6 +38,7 @@ export default function ExportPage(): JSX.Element {
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [completeness, setCompleteness] = useState<string | null>(null)
   const [actionBanner, setActionBanner] = useState<string | null>(null)
+  const [savedFilePath, setSavedFilePath] = useState<string | null>(null)
   const [actionFailed, setActionFailed] = useState(false)
   const [gelarWarning, setGelarWarning] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -226,7 +233,8 @@ export default function ExportPage(): JSX.Element {
         }
         if ('path' in result) {
           setActionFailed(false)
-          setActionBanner(`Tersimpan: ${result.path}`)
+          setSavedFilePath(result.path)
+          setActionBanner(savedExportMessage(result.path))
           setGelarWarning(gelarExportWarning(result.gelarWarnings))
         }
       },
@@ -260,8 +268,10 @@ export default function ExportPage(): JSX.Element {
         <PageTabs tabs={EXPORT_TABS} value={tab} onChange={setTab} />
 
         <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-          {tab === 'rekap' ? (
+          {tab === 'penugasan' ? (
             <ExportBebanPanel prodi={prodi} />
+          ) : tab === 'rekap-mk' ? (
+            <ExportRekapMkPanel prodi={prodi} />
           ) : prodi.length === 0 && !error ? (
             <p className="text-slate-600">Buat Program Studi dulu</p>
           ) : (
@@ -274,7 +284,11 @@ export default function ExportPage(): JSX.Element {
                 ) : (
                   <SuccessBanner
                     message={actionBanner}
-                    onDismiss={() => setActionBanner(null)}
+                    filePath={savedFilePath ?? ''}
+                    onDismiss={() => {
+                      setActionBanner(null)
+                      setSavedFilePath(null)
+                    }}
                   />
                 )
               ) : null}
